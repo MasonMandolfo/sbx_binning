@@ -112,21 +112,22 @@ rule metabat2_scaffolds2bin:
     log:
         LOG_FP / "metabat2_scaffolds2bin_{sample}.log",
     conda:
-        "envs/sbx_binning_env.yml"
+        "envs/sbx_binning.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     shell:
-        """
+        r"""
         if compgen -G "{input.bins_dir}/*.fa" > /dev/null; then
             : > {output.tsv}
             for F in {input.bins_dir}/*.fa; do
               BIN=$(basename $F .fa)
-              awk -v b=$BIN '/^>/{gsub(/^>/, "", $0); split($0,a,/[\t ]/); print a[1]"\t"b}' $F >> {output.tsv}
+              awk -v b=$BIN '/^>/{{gsub(/^>/,"",$0); split($0,a,/[ \t]/); print a[1]"\t"b}}' $F >> {output.tsv}
             done &> {log}
         else
             touch {output.tsv}
         fi
         """
+
 
 # ----------------------------
 # Convert VAMB clusters.tsv to scaffolds2bin.tsv
