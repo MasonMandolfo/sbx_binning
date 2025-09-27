@@ -1,17 +1,17 @@
 FROM condaforge/mambaforge:latest
 
 # Setup
-WORKDIR /home/sbx_template_env
+WORKDIR /home/sbx_binning_env
 
-COPY envs/sbx_template_env.yml ./
+COPY envs/sbx_binning_env.yml ./
 
 # Install environment
-RUN conda env create --file sbx_template_env.yml --name sbx_template
+RUN conda env create --file sbx_binning_env.yml --name sbx_binning
 
-ENV PATH="/opt/conda/envs/sbx_template/bin/:${PATH}"
+ENV PATH="/opt/conda/envs/sbx_binning/bin/:${PATH}"
 
 # "Activate" the environment
-SHELL ["conda", "run", "-n", "sbx_template", "/bin/bash", "-c"]
+SHELL ["conda", "run", "-n", "sbx_binning", "/bin/bash", "-c"]
 
 # Run
 CMD "bash"

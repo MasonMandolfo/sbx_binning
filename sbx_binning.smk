@@ -1,20 +1,20 @@
 try:
-    SBX_TEMPLATE_VERSION = get_ext_version("sbx_template")
+    SBX_TEMPLATE_VERSION = get_ext_version("sbx_binning")
 except NameError:
     # For backwards compatibility with older versions of Sunbeam
     SBX_TEMPLATE_VERSION = "0.0.0"
 
 try:
-    logger = get_extension_logger("sbx_template")
+    logger = get_extension_logger("sbx_binning")
 except NameError:
     # For backwards compatibility with older versions of Sunbeam
     import logging
 
-    logger = logging.getLogger("sunbeam.pipeline.extensions.sbx_template")
+    logger = logging.getLogger("sunbeam.pipeline.extensions.sbx_binning")
 
 
 logger.info("Doing some extension specific setup...")
-logger.info(f"Using sbx_template version {SBX_TEMPLATE_VERSION}.")
+logger.info(f"Using sbx_binning version {SBX_TEMPLATE_VERSION}.")
 logger.error("Don't worry, this isn't a real error.")
 
 
@@ -38,11 +38,11 @@ rule example_rule:
     benchmark:
         BENCHMARK_FP / "example_rule.tsv"
     params:
-        opts=Cfg["sbx_template"]["example_rule_options"],
+        opts=Cfg["sbx_binning"]["example_rule_options"],
     conda:
-        "envs/sbx_template_env.yml"
+        "envs/sbx_binning_env.yml"
     container:
-        f"docker://sunbeamlabs/sbx_template:{SBX_TEMPLATE_VERSION}"
+        f"docker://sunbeamlabs/sbx_binning:{SBX_TEMPLATE_VERSION}"
     shell:
         "(cat {params.opts} {input} > {output}) > {log} 2>&1"
 
@@ -58,8 +58,8 @@ rule example_with_script:
     benchmark:
         BENCHMARK_FP / "example_with_script.tsv"
     conda:
-        "envs/sbx_template_env.yml"
+        "envs/sbx_binning_env.yml"
     container:
-        f"docker://sunbeamlabs/sbx_template:{SBX_TEMPLATE_VERSION}"
+        f"docker://sunbeamlabs/sbx_binning:{SBX_TEMPLATE_VERSION}"
     script:
         "scripts/example_with_script.py"
