@@ -1,0 +1,48 @@
+name: Release
+
+on:
+    release:
+      types: [published]
+
+    workflow_dispatch:
+
+jobs:
+    run-tests:
+        uses: ./.github/workflows/tests.yml
+        secrets: inherit
+
+    check-version:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+          
+          - name: Get sbx version
+            shell: bash
+            run: |
+              SBX_VER=$(cat VERSION)
+              echo "SBX_VER=$SBX_VER" >> $GITHUB_ENV
+
+          - id: get_version
+            uses: battila7/get-version-action@v2
+
+          - name: Check version
+            shell: bash
+            run: |
+              RELEASE_VERSION=${{ steps.get_version.outputs.version-without-v }}
+              echo "Release version: ${RELEASE_VERSION}"
+              echo "Sbx version: ${{ env.SBX_VER }}"
+
+              if [[ $RELEASE_VERSION == ${{ env.SBX_VER }} ]]; then
+                  echo "Versions match, continuing..."
+              else
+                  echo "Versions don't match, exiting..."
+                  exit 1
+              fi
+
+    push-to-dockerhub:
+        uses: ./.github/workflows/docker.yml
+        secrets: inherit
+        needs:
+          - run-tests
+          - check-version

@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [ master, main ]
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Test with Sunbeam
+        uses: sunbeam-labs/sbx_test_action@v1
+
+      - name: Dump Logs
+        shell: bash
+        if: always()
+        run: tail -n +1 logs/* || true
+      
+      - name: Dump Stats
+        shell: bash
+        if: always()
+        run: cat stats/* || true
