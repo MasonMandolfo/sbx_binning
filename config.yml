@@ -1,2 +1,4 @@
 sbx_binning:
-  example_rule_options: /path/to/example_rule_thingy
+  min_contig: 2000
+  vamb_minfasta: 200000
+  threads: 8
