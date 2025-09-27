@@ -24,7 +24,7 @@ rule contig_depth_summary:
     log:
         LOG_FP / "contig_depth_summary_{sample}.log",
     conda:
-        "envs/sbx_binning.yml"
+        "envs/sbx_binning_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     threads: 4
@@ -54,7 +54,7 @@ rule binning_metabat2:
     log:
         LOG_FP / "binning_metabat2_{sample}.log",
     conda:
-        "envs/sbx_binning.yml"
+        "envs/sbx_binning_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     params:
@@ -81,7 +81,7 @@ rule binning_vamb:
     log:
         LOG_FP / "binning_vamb_{sample}.log",
     conda:
-        "envs/sbx_binning.yml"
+        "envs/sbx_binning_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     threads: 16
@@ -112,7 +112,7 @@ rule metabat2_scaffolds2bin:
     log:
         LOG_FP / "metabat2_scaffolds2bin_{sample}.log",
     conda:
-        "envs/sbx_binning.yml"
+        "envs/sbx_binning_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     shell:
@@ -141,7 +141,7 @@ rule vamb_scaffolds2bin:
     log:
         LOG_FP / "vamb_scaffolds2bin_{sample}.log",
     conda:
-        "envs/sbx_binning.yml"
+        "envs/sbx_binning_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     script:
@@ -164,7 +164,7 @@ rule refine_bins:
     log:
         LOG_FP / "refine_bins_{sample}.log",
     conda:
-        "envs/sbx_binning.yml"
+        "envs/sbx_binning_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     threads: 8
@@ -196,7 +196,7 @@ rule qc_bins:
     log:
         LOG_FP / "qc_bins_{sample}.log",
     conda:
-        "envs/sbx_binning.yml"
+        "envs/sbx_binning_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     threads: 8
