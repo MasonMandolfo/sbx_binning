@@ -57,16 +57,15 @@ rule binning_metabat2:
         "envs/sbx_binning.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
-    threads: 8
+    params:
+        min_contig=Cfg["sbx_binning"]["min_contig"]
     shell:
         """
-        if [ -s {input.contigs} ]; then
-            mkdir -p {output}
-            metabat2 -i {input.contigs} -a {input.depth} -o {output}/{wildcards.sample} &> {log}
-        else
-            touch {output}/{wildcards.sample}.dummy
-        fi
+        metabat2 -i {input.contigs} -a {input.depth} \
+                -m {params.min_contig} \
+                -o {output}/{wildcards.sample} &> {log}
         """
+
 
 # ----------------------------
 # VAMB
@@ -99,13 +98,64 @@ rule binning_vamb:
         fi
         """
 
+
+# ----------------------------
+# Make scaffolds2bin.tsv from MetaBAT2 bins
+# ----------------------------
+rule metabat2_scaffolds2bin:
+    input:
+        bins_dir="bins/{sample}/metabat2"
+    output:
+        tsv="bins/{sample}/metabat2_scaffolds2bin.tsv"
+    benchmark:
+        BENCHMARK_FP / "metabat2_scaffolds2bin_{sample}.tsv"
+    log:
+        LOG_FP / "metabat2_scaffolds2bin_{sample}.log",
+    conda:
+        "envs/sbx_binning.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
+    shell:
+        """
+        if compgen -G "{input.bins_dir}/*.fa" > /dev/null; then
+            : > {output.tsv}
+            for F in {input.bins_dir}/*.fa; do
+              BIN=$(basename $F .fa)
+              awk -v b=$BIN '/^>/{gsub(/^>/, "", $0); split($0,a,/[\t ]/); print a[1]"\t"b}' $F >> {output.tsv}
+            done &> {log}
+        else
+            touch {output.tsv}
+        fi
+        """
+
+# ----------------------------
+# Convert VAMB clusters.tsv to scaffolds2bin.tsv
+# ----------------------------
+rule vamb_scaffolds2bin:
+    input:
+        clusters="bins/{sample}/vamb/clusters.tsv"
+    output:
+        tsv="bins/{sample}/vamb_scaffolds2bin.tsv"
+    benchmark:
+        BENCHMARK_FP / "vamb_scaffolds2bin_{sample}.tsv"
+    log:
+        LOG_FP / "vamb_scaffolds2bin_{sample}.log",
+    conda:
+        "envs/sbx_binning.yml"
+    container:
+        f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
+    script:
+        "scripts/vamb_clusters_to_bins.py"
+
+
 # ----------------------------
 # Refinement (MAGScoT)
 # ----------------------------
 rule refine_bins:
     input:
-        metabat2="bins/{sample}/metabat2",
-        vamb="bins/{sample}/vamb"
+        metabat2_bins="bins/{sample}/metabat2",
+        metabat2_map="bins/{sample}/metabat2_scaffolds2bin.tsv",
+        vamb_map="bins/{sample}/vamb_scaffolds2bin.tsv"
     output:
         bins="bins/{sample}/refined/{sample}.refined_bins.fa",
         summary="bins/{sample}/refined/{sample}.refined_summary.tsv"
@@ -120,17 +170,18 @@ rule refine_bins:
     threads: 8
     shell:
         """
-        if [ -d {input.metabat2} ] || [ -d {input.vamb} ]; then
+        if [ -s {input.metabat2_map} ] || [ -s {input.vamb_map} ]; then
             mkdir -p $(dirname {output.bins})
             MAGScoT \
-              --metabat {input.metabat2} \
-              --vamb {input.vamb} \
+              --metabat {input.metabat2_map} \
+              --vamb {input.vamb_map} \
               --outdir $(dirname {output.bins}) \
               --prefix {wildcards.sample} &> {log}
         else
             touch {output.bins} {output.summary}
         fi
         """
+
 
 # ----------------------------
 # QC (CheckM2)
