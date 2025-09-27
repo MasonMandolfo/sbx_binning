@@ -75,7 +75,7 @@ rule binning_vamb:
         contigs=ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
         depth=ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv",
     output:
-        directory("bins/{sample}/vamb"),
+        clusters="bins/{sample}/vamb/clusters.tsv"
     benchmark:
         BENCHMARK_FP / "binning_vamb_{sample}.tsv"
     log:
