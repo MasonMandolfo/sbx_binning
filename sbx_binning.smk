@@ -112,7 +112,7 @@ rule metabat2_scaffolds2bin:
     log:
         LOG_FP / "metabat2_scaffolds2bin_{sample}.log",
     conda:
-        "envs/sbx_binning.yml"
+        "envs/sbx_binning_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     shell:
