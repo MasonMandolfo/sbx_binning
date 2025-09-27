@@ -4,7 +4,7 @@ except NameError:
     SBX_ASSEMBLY_VERSION = "0.0.0"
 
 # Collect all outputs in one rule
-rule all_binning:
+rule sbx_binning:
     input:
         expand("bins/{sample}/refined/{sample}.refined_bins.fa", sample=Samples),
         expand("qc/mags/{sample}.checkm2.tsv", sample=Samples),
