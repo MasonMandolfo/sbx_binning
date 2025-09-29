@@ -25,7 +25,7 @@ rule all_binning:
 rule binning_metabat2:
     input:
         contigs=ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
-        depth=ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv",
+        depth=ASSEMBLY_FP / "megahit" / "{sample}_asm" / "coverage" / "contig_depth.tsv",
     output:
         directory("bins/{sample}/metabat2"),
     benchmark:
@@ -52,7 +52,7 @@ rule binning_metabat2:
 rule binning_vamb:
     input:
         contigs=ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
-        depth=ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv",
+        depth=ASSEMBLY_FP / "megahit" / "{sample}_asm" / "coverage" / "contig_depth.tsv",
     output:
         clusters="bins/{sample}/vamb/clusters.tsv"
     benchmark:
