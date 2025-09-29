@@ -9,44 +9,14 @@ rule sbx_binning:
         expand("bins/{sample}/refined/{sample}.refined_bins.fa", sample=Samples),
         expand("qc/mags/{sample}.checkm2.tsv", sample=Samples),
 
-# ----------------------------
-# Depth summarization
-# ----------------------------
-rule contig_depth_summary:
-    input:
-        contigs=ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
-        bams=expand(ASSEMBLY_FP / "coverage" / "samtools" / "{other}.sorted.bam",
-                    other=Samples.keys())
-    output:
-        depth=ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv",
-    benchmark:
-        BENCHMARK_FP / "contig_depth_summary_{sample}.tsv"
-    log:
-        LOG_FP / "contig_depth_summary_{sample}.log",
-    conda:
-        "envs/sbx_binning_env.yml"
-    container:
-        f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
-    threads: 4
-    shell:
-        """
-        if [ -s {input.contigs} ]; then
-            mkdir -p $(dirname {output.depth})
-            jgi_summarize_bam_contig_depths \
-              --outputDepth {output.depth} \
-              {input.bams} &> {log}
-        else
-            touch {output.depth}
-        fi
-        """
 
 # ----------------------------
 # MetaBAT2
 # ----------------------------
 rule binning_metabat2:
     input:
-        contigs=ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
-        depth=ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv",
+        contigs="assembly/{sample}/contigs.fa",
+        depth="coverage/{sample}/contig_depth.tsv",
     output:
         directory("bins/{sample}/metabat2"),
     benchmark:
@@ -72,8 +42,8 @@ rule binning_metabat2:
 # ----------------------------
 rule binning_vamb:
     input:
-        contigs=ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
-        depth=ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv",
+        contigs="assembly/{sample}/contigs.fa",
+        depth="coverage/{sample}/contig_depth.tsv",
     output:
         clusters="bins/{sample}/vamb/clusters.tsv"
     benchmark:
