@@ -21,8 +21,8 @@ rule all_binning:
 # ----------------------------
 rule binning_metabat2:
     input:
-        contigs="assembly/{sample}/contigs.fa",
-        depth="coverage/{sample}/contig_depth.tsv",
+        contigs="sunbeam_output/assembly/megahit/{sample}_asm/final.contigs.fa",
+        depth="sunbeam_output/assembly/megahit/{sample}_asm/coverage/contig_depth.tsv",
     output:
         directory("bins/{sample}/metabat2"),
     benchmark:
@@ -48,8 +48,8 @@ rule binning_metabat2:
 # ----------------------------
 rule binning_vamb:
     input:
-        contigs="assembly/{sample}/contigs.fa",
-        depth="coverage/{sample}/contig_depth.tsv",
+        contigs="sunbeam_output/assembly/megahit/{sample}_asm/final.contigs.fa",
+        depth="sunbeam_output/assembly/megahit/{sample}_asm/coverage/contig_depth.tsv",
     output:
         clusters="bins/{sample}/vamb/clusters.tsv"
     benchmark:
