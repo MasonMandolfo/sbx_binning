@@ -6,14 +6,17 @@ except NameError:
 # ----------------------------
 # Top-level target for binning workflow
 # ----------------------------
+# ----------------------------
+# Top-level target for binning workflow
+# ----------------------------
 rule all_binning:
     input:
         # Refined MAGs and QC
         expand("bins/{sample}/refined/{sample}.refined_bins.fa", sample=Samples),
         expand("qc/mags/{sample}.checkm2.tsv", sample=Samples),
         # Assembly + coverage (ensures sbx_assembly rules run first)
-        expand("sunbeam_output/assembly/megahit/{sample}_asm/final.contigs.fa", sample=Samples),
-        expand("sunbeam_output/assembly/megahit/{sample}_asm/coverage/contig_depth.tsv", sample=Samples),
+        expand(ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa", sample=Samples),
+        expand(ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv", sample=Samples),
 
 
 # ----------------------------
@@ -21,8 +24,8 @@ rule all_binning:
 # ----------------------------
 rule binning_metabat2:
     input:
-        contigs="sunbeam_output/assembly/megahit/{sample}_asm/final.contigs.fa",
-        depth="sunbeam_output/assembly/megahit/{sample}_asm/coverage/contig_depth.tsv",
+        contigs=ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
+        depth=ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv",
     output:
         directory("bins/{sample}/metabat2"),
     benchmark:
@@ -48,8 +51,8 @@ rule binning_metabat2:
 # ----------------------------
 rule binning_vamb:
     input:
-        contigs="sunbeam_output/assembly/megahit/{sample}_asm/final.contigs.fa",
-        depth="sunbeam_output/assembly/megahit/{sample}_asm/coverage/contig_depth.tsv",
+        contigs=ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
+        depth=ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv",
     output:
         clusters="bins/{sample}/vamb/clusters.tsv"
     benchmark:
