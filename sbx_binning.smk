@@ -3,11 +3,17 @@ try:
 except NameError:
     SBX_ASSEMBLY_VERSION = "0.0.0"
 
-# Collect all outputs in one rule
-rule sbx_binning:
+# ----------------------------
+# Top-level target for binning workflow
+# ----------------------------
+rule all_binning:
     input:
+        # Refined MAGs and QC
         expand("bins/{sample}/refined/{sample}.refined_bins.fa", sample=Samples),
         expand("qc/mags/{sample}.checkm2.tsv", sample=Samples),
+        # Assembly + coverage (ensures sbx_assembly rules run first)
+        expand("sunbeam_output/assembly/megahit/{sample}_asm/final.contigs.fa", sample=Samples),
+        expand("sunbeam_output/assembly/megahit/{sample}_asm/coverage/contig_depth.tsv", sample=Samples),
 
 
 # ----------------------------
