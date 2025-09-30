@@ -4,21 +4,11 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  # Modern python to satisfy checkm2
-  - python=3.12
-
-  # Bio tools
+  - python=3.10
   - minimap2
   - samtools
-  - vamb
-  - checkm2=1.1.0
-  - jgi_summarize_bam_contig_depths=2.14   # exact version available on bioconda
-
-  # Scientific Python stack
-  - numpy>=1.24
-  - pandas>=1.5
-
-  # Pip-only deps
+  - vamb=3.0.2
+  - jgi_summarize_bam_contig_depths=2.15
   - pip
   - pip:
       - magscot
