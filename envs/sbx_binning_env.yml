@@ -4,21 +4,21 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  # Use a stable Python that bioinformatics packages support
-  - python=3.9
+  # Modern python to satisfy checkm2
+  - python=3.12
 
-  # Core bioinformatics tools
+  # Bio tools
   - minimap2
   - samtools
   - vamb
-  - checkm2
-  - jgi_summarize_bam_contig_depths=2.14.1   # 2.15 doesn’t exist in bioconda
+  - checkm2=1.1.0
+  - jgi_summarize_bam_contig_depths=2.14   # exact version available on bioconda
 
-  # Common Python scientific stack (modern versions)
-  - numpy>=1.21
+  # Scientific Python stack
+  - numpy>=1.24
   - pandas>=1.5
 
-  # Let pip handle packages not in bioconda
+  # Pip-only deps
   - pip
   - pip:
-      - magscot   # only distributed via pip
+      - magscot
