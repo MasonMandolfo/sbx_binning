@@ -11,10 +11,6 @@ except NameError:
 # ----------------------------
 rule all_binning:
     input:
-        # force cross-mapped BAMs & JGI depth for every anchor
-        expand(ASSEMBLY_FP / "coverage" / "samtools_cross" / "{sample}__READY", sample=Samples),
-        expand(ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv", sample=Samples),
-        # final bins + QC
         expand("bins/{sample}/refined/{sample}.refined_bins.fa", sample=Samples),
         expand("qc/mags/{sample}.checkm2.tsv", sample=Samples),
 
@@ -34,7 +30,7 @@ def load_groups(csv_fp):
 
 group_csv = Cfg["sbx_binning"].get("group_csv")
 if not group_csv:
-    raise ValueError("Please specify sbx_binning.group_csv in config.yml")
+    raise ValueError("Please specify sbx_binning.group_csv in sunbeam_config.yml")
 
 Groups = load_groups(group_csv)
 
