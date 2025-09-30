@@ -11,12 +11,103 @@ except NameError:
 # ----------------------------
 rule all_binning:
     input:
-        # Refined MAGs and QC
+        # force cross-mapped BAMs & JGI depth for every anchor
+        expand(ASSEMBLY_FP / "coverage" / "samtools_cross" / "{sample}__READY", sample=Samples),
+        expand(ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv", sample=Samples),
+        # final bins + QC
         expand("bins/{sample}/refined/{sample}.refined_bins.fa", sample=Samples),
         expand("qc/mags/{sample}.checkm2.tsv", sample=Samples),
-        # Assembly + coverage (ensures sbx_assembly rules run first)
-        expand(ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa", sample=Samples),
-        expand(ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv", sample=Samples),
+
+
+import csv
+
+def load_groups(csv_fp):
+    groups = {}
+    with open(csv_fp) as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if not row:
+                continue
+            group_id, *samples = row
+            groups[group_id] = samples
+    return groups
+
+group_csv = Cfg["sbx_binning"].get("group_csv")
+if not group_csv:
+    raise ValueError("Please specify sbx_binning.group_csv in config.yml")
+
+Groups = load_groups(group_csv)
+
+# Build sample→group index
+Sample2Group = {s: g for g, samples in Groups.items() for s in samples}
+
+def group_members(sample):
+    """Return the list of samples in the same group as `sample` (anchor)."""
+    g = Sample2Group.get(sample)
+    if g is None:
+        raise ValueError(f"Sample {sample} not found in group_csv {group_csv}")
+    return Groups[g]
+
+rule crossmap_sort:
+    input:
+        contig = ASSEMBLY_FP / "contigs" / "{anchor}-contigs.fa",
+        reads  = expand(QC_FP / "decontam" / "{{other}}_{rp}.fastq.gz", rp=Pairs)
+    output:
+        bam = ASSEMBLY_FP / "coverage" / "samtools_cross" / "{anchor}__{other}.sorted.bam"
+    log:
+        LOG_FP / "crossmap_sort_{anchor}__{other}.log"
+    threads: Cfg["sbx_assembly"]["threads"]
+    conda:
+        "envs/sbx_coverage.yml"   # reuse sbx_assembly coverage env (minimap2+samtools)
+    shell:
+        r"""
+        # align then sort
+        mkdir -p $(dirname {output.bam})
+        minimap2 -ax sr -t {threads} {input.contig} {input.reads} \
+          2> {log} \
+        | samtools sort -@ {threads} -o {output.bam} -  >> {log} 2>&1
+        samtools index {output.bam} >> {log} 2>&1
+        """
+
+def cross_bams_for_anchor(wc):
+    """All group members' BAMs mapped to the anchor's contigs."""
+    return [
+        ASSEMBLY_FP / "coverage" / "samtools_cross" / f"{wc.anchor}__{other}.sorted.bam"
+        for other in group_members(wc.anchor)
+    ]
+
+rule summarize_bam_depths:
+    input:
+        contigs = ASSEMBLY_FP / "contigs" / "{anchor}-contigs.fa",
+        bams    = cross_bams_for_anchor,
+        ready   = ASSEMBLY_FP / "coverage" / "samtools_cross" / "{anchor}__READY"
+    output:
+        depth = ASSEMBLY_FP / "coverage" / "depth" / "{anchor}.contig_depth.tsv",
+    log:
+        LOG_FP / "summarize_bam_depths_{anchor}.log"
+    conda:
+        "envs/sbx_binning_env.yml"
+    threads: 4
+    shell:
+        """
+        if [ -s {input.contigs} ]; then
+            mkdir -p $(dirname {output.depth})
+            jgi_summarize_bam_contig_depths \
+                --outputDepth {output.depth} \
+                {input.bams} &> {log}
+        else
+            touch {output.depth}
+        fi
+        """
+
+# For each anchor, require BAMs from all group members mapped to that anchor
+rule require_crossmaps_for_anchor:
+    input:
+        cross_bams_for_anchor
+    output:
+        touch(ASSEMBLY_FP / "coverage" / "samtools_cross" / "{anchor}__READY")
+    message:
+        "All cross-mapped BAMs ready for anchor {wildcards.anchor}"
 
 
 # ----------------------------
@@ -24,8 +115,8 @@ rule all_binning:
 # ----------------------------
 rule binning_metabat2:
     input:
-        contigs=ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
-        depth=ASSEMBLY_FP / "megahit" / "{sample}_asm" / "coverage" / "contig_depth.tsv",
+        contigs =   ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
+        depth   =   ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv"
     output:
         directory("bins/{sample}/metabat2"),
     benchmark:
@@ -51,8 +142,8 @@ rule binning_metabat2:
 # ----------------------------
 rule binning_vamb:
     input:
-        contigs=ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
-        depth=ASSEMBLY_FP / "megahit" / "{sample}_asm" / "coverage" / "contig_depth.tsv",
+        contigs =   ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
+        depth   =   ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv"
     output:
         clusters="bins/{sample}/vamb/clusters.tsv"
     benchmark:
