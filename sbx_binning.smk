@@ -154,60 +154,39 @@ rule binning_vamb:
         fi
         """
 
-
-# ----------------------------
-# Make scaffolds2bin.tsv from MetaBAT2 bins
-# ----------------------------
-rule metabat2_scaffolds2bin:
+rule scaffolds2bin:
     input:
-        bins_dir="bins/{sample}/metabat2"
+        # Use lambda to select correct input based on tool
+        lambda wildcards: (
+            f"bins/{wildcards.sample}/metabat2"
+            if wildcards.tool == "metabat2"
+            else f"bins/{wildcards.sample}/vamb/clusters.tsv"
+        )
     output:
-        tsv="bins/{sample}/metabat2_scaffolds2bin.tsv"
-    benchmark:
-        BENCHMARK_FP / "metabat2_scaffolds2bin_{sample}.tsv"
+        tsv="bins/{sample}/{tool}_scaffolds2bin.tsv"
     log:
-        LOG_FP / "metabat2_scaffolds2bin_{sample}.log",
+        LOG_FP / "scaffolds2bin_{sample}_{tool}.log"
     conda:
         "envs/sbx_binning_env.yml"
-    container:
-        f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
-    shell:
-        r"""
-        if compgen -G "{input.bins_dir}/*.fa" > /dev/null; then
-            : > {output.tsv}
-            for F in {input.bins_dir}/*.fa; do
-              BIN=$(basename $F .fa)
-              awk -v b=$BIN '/^>/{{gsub(/^>/,"",$0); split($0,a,/[ \t]/); print a[1]"\t"b}}' $F >> {output.tsv}
-            done &> {log}
-        else
-            touch {output.tsv}
-        fi
-        """
+    threads: 1
+    run:
+        import os, subprocess
+        if wildcards.tool == "metabat2":
+            bins_dir = input[0]
+            with open(output.tsv, "w") as out, open(log, "w") as lg:
+                if any(fn.endswith(".fa") for fn in os.listdir(bins_dir)):
+                    for fn in os.listdir(bins_dir):
+                        if fn.endswith(".fa"):
+                            path = os.path.join(bins_dir, fn)
+                            BIN = os.path.splitext(fn)[0]
+                            cmd = f"awk -v b={BIN} '/^>/' {path}"
+                            res = subprocess.check_output(cmd, shell=True, text=True)
+                            for line in res.strip().splitlines():
+                                contig = line.lstrip(">").split()[0]
+                                out.write(f"{contig}\t{BIN}\n")
+        elif wildcards.tool == "vamb":
+            shell(f"python scripts/vamb_clusters_to_bins.py {input} {output.tsv} > {log} 2>&1")
 
-
-# ----------------------------
-# Convert VAMB clusters.tsv to scaffolds2bin.tsv
-# ----------------------------
-rule vamb_scaffolds2bin:
-    input:
-        clusters="bins/{sample}/vamb/clusters.tsv"
-    output:
-        tsv="bins/{sample}/vamb_scaffolds2bin.tsv"
-    benchmark:
-        BENCHMARK_FP / "vamb_scaffolds2bin_{sample}.tsv"
-    log:
-        LOG_FP / "vamb_scaffolds2bin_{sample}.log",
-    conda:
-        "envs/sbx_binning_env.yml"
-    container:
-        f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
-    script:
-        "scripts/vamb_clusters_to_bins.py"
-
-rule all_scaffolds2bin:
-    input:
-        expand("bins/{sample}/metabat2_scaffolds2bin.tsv", sample=Samples),
-        expand("bins/{sample}/vamb_scaffolds2bin.tsv", sample=Samples)
 
 # ----------------------------
 # Refinement (MAGScoT)
