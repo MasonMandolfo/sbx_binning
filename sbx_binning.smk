@@ -236,7 +236,7 @@ rule qc_bins:
     log:
         LOG_FP / "qc_bins_{sample}.log",
     conda:
-        "envs/sbx_binning_env.yml"
+        "envs/sbx_checkm2_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     threads: 8

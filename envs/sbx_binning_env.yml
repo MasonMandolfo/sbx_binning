@@ -4,11 +4,10 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - python=3.10
+  - python
   - minimap2
   - samtools
-  - vamb=3.0.2
-  - jgi_summarize_bam_contig_depths=2.15
+  - vamb
   - pip
   - pip:
       - magscot
