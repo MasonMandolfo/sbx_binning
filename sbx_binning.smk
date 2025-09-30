@@ -76,7 +76,6 @@ rule summarize_bam_depths:
     input:
         contigs = ASSEMBLY_FP / "contigs" / "{anchor}-contigs.fa",
         bams    = cross_bams_for_anchor,
-        ready   = ASSEMBLY_FP / "coverage" / "samtools_cross" / "{anchor}__READY"
     output:
         depth = ASSEMBLY_FP / "coverage" / "depth" / "{anchor}.contig_depth.tsv",
     log:
@@ -95,15 +94,6 @@ rule summarize_bam_depths:
             touch {output.depth}
         fi
         """
-
-# For each anchor, require BAMs from all group members mapped to that anchor
-rule require_crossmaps_for_anchor:
-    input:
-        cross_bams_for_anchor
-    output:
-        touch(ASSEMBLY_FP / "coverage" / "samtools_cross" / "{anchor}__READY")
-    message:
-        "All cross-mapped BAMs ready for anchor {wildcards.anchor}"
 
 
 # ----------------------------
