@@ -204,6 +204,10 @@ rule vamb_scaffolds2bin:
     script:
         "scripts/vamb_clusters_to_bins.py"
 
+rule all_scaffolds2bin:
+    input:
+        expand("bins/{sample}/metabat2_scaffolds2bin.tsv", sample=Samples),
+        expand("bins/{sample}/vamb_scaffolds2bin.tsv", sample=Samples)
 
 # ----------------------------
 # Refinement (MAGScoT)
