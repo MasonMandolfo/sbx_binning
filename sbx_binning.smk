@@ -54,7 +54,7 @@ rule crossmap_sort:
         LOG_FP / "crossmap_sort_{anchor}__{other}.log"
     threads: Cfg["sbx_assembly"]["threads"]
     conda:
-        "sbx_assembly/envs/sbx_coverage.yml"   # reuse sbx_assembly coverage env (minimap2+samtools)
+        "envs/sbx_binning_env.yml"   
     shell:
         r"""
         # align then sort
