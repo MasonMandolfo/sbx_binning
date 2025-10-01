@@ -212,7 +212,7 @@ rule refine_bins:
         """
         if [ -s {input.metabat2_map} ] || [ -s {input.vamb_map} ]; then
             mkdir -p $(dirname {output.bins})
-            MAGScoT \
+             {workflow.basedir}/scripts/run_magscot.sh \
               --metabat {input.metabat2_map} \
               --vamb {input.vamb_map} \
               --outdir $(dirname {output.bins}) \
