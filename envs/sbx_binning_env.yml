@@ -8,6 +8,18 @@ dependencies:
   - minimap2
   - samtools
   - vamb
+  - r-base
+  - r-optparse
+  - r-dplyr
+  - r-readr
+  - r-funr
+  - r-digest
+  - hmmer
+  - prodigal
+  - parallel
+  - git
   - pip
   - pip:
-      - magscot
+    - git+https://github.com/ikmb/MAGScoT.git
+  - make
+
