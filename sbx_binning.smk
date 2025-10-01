@@ -212,11 +212,11 @@ rule refine_bins:
         """
         if [ -s {input.metabat2_map} ] || [ -s {input.vamb_map} ]; then
             mkdir -p $(dirname {output.bins})
-             {workflow.basedir}/scripts/run_magscot.sh \
-              --metabat {input.metabat2_map} \
-              --vamb {input.vamb_map} \
-              --outdir $(dirname {output.bins}) \
-              --prefix {wildcards.sample} &> {log}
+            {workflow.basedir}/scripts/run_magscot.sh \
+            --metabat {input.metabat2_map} \
+            --vamb {input.vamb_map} \
+            --outdir $(dirname {output.bins}) \
+            --prefix {wildcards.sample} &> {log}
         else
             touch {output.bins} {output.summary}
         fi
