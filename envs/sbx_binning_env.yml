@@ -18,8 +18,4 @@ dependencies:
   - prodigal
   - parallel
   - git
-  - pip
-  - pip:
-    - git+https://github.com/ikmb/MAGScoT.git
-  - make
 
