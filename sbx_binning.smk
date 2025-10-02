@@ -131,7 +131,7 @@ rule binning_vamb:
         contigs =   ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
         depth   =   ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv"
     output:
-        clusters="bins/{sample}/vamb/clusters.tsv"
+        clusters="bins/{sample}/vamb/vae_clusters_unsplit.tsv"
     benchmark:
         BENCHMARK_FP / "binning_vamb_{sample}.tsv"
     log:
@@ -144,11 +144,12 @@ rule binning_vamb:
     shell:
         """
         if [ -s {input.contigs} ]; then
-            mkdir -p $(dirname {output}) 
-            vamb bin \
-                 --outdir $(dirname {output})  \
+            outdir=bins/{wildcards.sample}/vamb
+            mkdir -p "$outdir" 
+            vamb bin default\
+                 --outdir "$outdir"  \
                  --fasta {input.contigs} \
-                 --jgi {input.depth} \
+                 --abundance_tsv {input.depth} \
                  --minfasta 200000 &> {log}
         else
             touch {output}/vamb.dummy
@@ -160,7 +161,7 @@ rule scaffolds2bin:
         lambda wildcards: (
             f"bins/{wildcards.sample}/metabat2"
             if wildcards.tool == "metabat2"
-            else f"bins/{wildcards.sample}/vamb/clusters.tsv"
+            else f"bins/{wildcards.sample}/vamb/vae_clusters_unsplit.tsv"
         )
     output:
         tsv = "bins/{sample}/{tool}_scaffolds2bin.tsv"
