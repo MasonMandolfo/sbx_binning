@@ -72,7 +72,7 @@ def cross_bams_for_anchor(wc):
         for other in group_members(wc.anchor)
     ]
 
-rule summarize_bam_depths:
+rule depth_to_metabat2:
     input:
         contigs = ASSEMBLY_FP / "contigs" / "{anchor}-contigs.fa",
         bams    = cross_bams_for_anchor,
@@ -94,6 +94,26 @@ rule summarize_bam_depths:
             touch {output.depth}
         fi
         """
+
+rule depth_to_vamb:
+    input:
+        depth = ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv"
+    output:
+        vambdepth = ASSEMBLY_FP / "coverage" / "depth" / "{sample}.vamb_depth.tsv"
+    log:
+        LOG_FP / "depth_to_vamb_{sample}.log"
+    run:
+        with open(input.depth) as fin, open(output.vambdepth, "w") as fout:
+            header = fin.readline().strip().split("\t")
+            # Keep only the contigName and the BAM mean-depth columns (skip contigLen, totalAvgDepth, and -var)
+            keep_idxs = [0] + [i for i, h in enumerate(header) if h.endswith(".sorted.bam") and not h.endswith("-var")]
+            # Write new header: "contigname" + clean sample IDs
+            samples = [h.split("__")[-1].replace(".sorted.bam", "") for h in header if h.endswith(".sorted.bam")]
+            fout.write("contigname\t" + "\t".join(samples) + "\n")
+            for line in fin:
+                parts = line.strip().split("\t")
+                fout.write("\t".join(parts[i] for i in keep_idxs) + "\n")
+
 
 
 # ----------------------------
@@ -129,7 +149,7 @@ rule binning_metabat2:
 rule binning_vamb:
     input:
         contigs =   ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
-        depth   =   ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv"
+        depth   =   ASSEMBLY_FP / "coverage" / "depth" / "{sample}.vamb_depth.tsv"
     output:
         vambdir = directory("bins/{sample}/vamb")
     benchmark:
