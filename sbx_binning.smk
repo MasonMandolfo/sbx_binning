@@ -131,7 +131,7 @@ rule binning_vamb:
         contigs =   ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa",
         depth   =   ASSEMBLY_FP / "coverage" / "depth" / "{sample}.contig_depth.tsv"
     output:
-        clusters="bins/{sample}/vamb/vae_clusters_unsplit.tsv"
+        vambdir = directory("bins/{sample}/vamb")
     benchmark:
         BENCHMARK_FP / "binning_vamb_{sample}.tsv"
     log:
@@ -145,7 +145,7 @@ rule binning_vamb:
         """
         if [ -s {input.contigs} ]; then
             vamb bin default\
-                 --outdir bins/{wildcards.sample}/vamb  \
+                 --outdir {output.vambdir}  \
                  --fasta {input.contigs} \
                  --abundance_tsv {input.depth} \
                  --minfasta 200000 &> {log}
@@ -159,7 +159,7 @@ rule scaffolds2bin:
         lambda wildcards: (
             f"bins/{wildcards.sample}/metabat2"
             if wildcards.tool == "metabat2"
-            else f"bins/{wildcards.sample}/vamb/vae_clusters_unsplit.tsv"
+            else directory(f"bins/{wc.sample}/vamb")
         )
     output:
         tsv = "bins/{sample}/{tool}_scaffolds2bin.tsv"
@@ -182,7 +182,7 @@ rule scaffolds2bin:
                 touch {output.tsv}
             fi
         elif [ "{wildcards.tool}" = "vamb" ]; then
-            python scripts/vamb_clusters_to_bins.py {input} {output.tsv} > {log} 2>&1
+            python scripts/vamb_clusters_to_bins.py {input}/vae_clusters_unsplit.tsv {output.tsv} > {log} 2>&1
         else
             echo "Unknown binning tool: {wildcards.tool}" >&2
             exit 1
