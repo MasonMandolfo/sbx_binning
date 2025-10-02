@@ -144,8 +144,9 @@ rule binning_vamb:
     shell:
         """
         if [ -s {input.contigs} ]; then
-            mkdir -p {output}
-            vamb --outdir {output} \
+            mkdir -p $(dirname {output}) 
+            vamb bin \
+                 --outdir $(dirname {output})  \
                  --fasta {input.contigs} \
                  --jgi {input.depth} \
                  --minfasta 200000 &> {log}
