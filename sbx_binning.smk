@@ -156,36 +156,39 @@ rule binning_vamb:
 
 rule scaffolds2bin:
     input:
-        # Use lambda to select correct input based on tool
         lambda wildcards: (
             f"bins/{wildcards.sample}/metabat2"
             if wildcards.tool == "metabat2"
             else f"bins/{wildcards.sample}/vamb/clusters.tsv"
         )
     output:
-        tsv="bins/{sample}/{tool}_scaffolds2bin.tsv"
+        tsv = "bins/{sample}/{tool}_scaffolds2bin.tsv"
     log:
         LOG_FP / "scaffolds2bin_{sample}_{tool}.log"
     conda:
         "envs/sbx_binning_env.yml"
     threads: 1
-    run:
-        import os, subprocess
-        if wildcards.tool == "metabat2":
-            bins_dir = input[0]
-            with open(output.tsv, "w") as out, open(log, "w") as lg:
-                if any(fn.endswith(".fa") for fn in os.listdir(bins_dir)):
-                    for fn in os.listdir(bins_dir):
-                        if fn.endswith(".fa"):
-                            path = os.path.join(bins_dir, fn)
-                            BIN = os.path.splitext(fn)[0]
-                            cmd = f"awk -v b={BIN} '/^>/' {path}"
-                            res = subprocess.check_output(cmd, shell=True, text=True)
-                            for line in res.strip().splitlines():
-                                contig = line.lstrip(">").split()[0]
-                                out.write(f"{contig}\t{BIN}\n")
-        elif wildcards.tool == "vamb":
-            shell(f"python scripts/vamb_clusters_to_bins.py {input} {output.tsv} > {log} 2>&1")
+    shell:
+        r"""
+        if [ "{wildcards.tool}" = "metabat2" ]; then
+            bins_dir={input}
+            if ls ${{bins_dir}}/*.fa 1> /dev/null 2>&1; then
+                for f in ${{bins_dir}}/*.fa; do
+                    bin=$(basename $f .fa)
+                    awk -v b=$bin '/^>/ {{gsub(/^>/, "", $1); print $1 "\t" b}}' $f
+                done > {output.tsv} 2> {log}
+            else
+                # No bins produced, create empty file
+                touch {output.tsv}
+            fi
+        elif [ "{wildcards.tool}" = "vamb" ]; then
+            python scripts/vamb_clusters_to_bins.py {input} {output.tsv} > {log} 2>&1
+        else
+            echo "Unknown binning tool: {wildcards.tool}" >&2
+            exit 1
+        fi
+        """
+
 
 
 # ----------------------------
