@@ -18,4 +18,5 @@ dependencies:
   - prodigal
   - parallel
   - git
-
+  - metabat2
+  - boost
