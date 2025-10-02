@@ -159,7 +159,7 @@ rule scaffolds2bin:
         lambda wildcards: (
             f"bins/{wildcards.sample}/metabat2"
             if wildcards.tool == "metabat2"
-            else directory(f"bins/{wc.sample}/vamb")
+            else directory(f"bins/{wildcards.sample}/vamb")
         )
     output:
         tsv = "bins/{sample}/{tool}_scaffolds2bin.tsv"
