@@ -144,10 +144,8 @@ rule binning_vamb:
     shell:
         """
         if [ -s {input.contigs} ]; then
-            outdir=bins/{wildcards.sample}/vamb
-            mkdir -p "$outdir" 
             vamb bin default\
-                 --outdir "$outdir"  \
+                 --outdir bins/{wildcards.sample}/vamb  \
                  --fasta {input.contigs} \
                  --abundance_tsv {input.depth} \
                  --minfasta 200000 &> {log}
