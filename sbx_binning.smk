@@ -224,14 +224,112 @@ rule concat_bin_mappings:
         cat {input.met} {input.vam} > {output.concat} 2> {log}
         """
 
+rule prodigal_orf:
+    input:
+        contigs = ASSEMBLY_FP / "contigs" / "{sample}-contigs.fa"
+    output:
+        faa="qc/{sample}/prodigal/{sample}.faa",
+        ffn="qc/{sample}/prodigal/{sample}.ffn"
+    log:
+        LOG_FP / "prodigal_{sample}.log"
+    conda:
+        "envs/sbx_binning_env.yml"
+    threads: 8
+    shell:
+       r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output.faa})
+        tmpdir="$(mktemp -d)"
+
+        # Split FASTA by records and run prodigal in parallel; concatenate chunk outputs
+        cat {input.contigs} \
+          | parallel -j {threads} --block 999k --recstart '>' --pipe \
+              prodigal -p meta \
+                       -a "$tmpdir"/{wildcards.sample}.{{#}}.faa \
+                       -d "$tmpdir"/{wildcards.sample}.{{#}}.ffn \
+                       -o /dev/null 2>> {log}
+
+        cat "$tmpdir"/{wildcards.sample}.*.faa > {output.faa}
+        cat "$tmpdir"/{wildcards.sample}.*.ffn > {output.ffn}
+        rm -rf "$tmpdir"
+        """
+
+rule hmmsearch_tigr:
+    input:
+        faa="qc/{sample}/prodigal/{sample}.faa"
+    output:
+        tbl = "qc/{sample}/hmm/{sample}.hmm.tigr.hit.out",
+        out = "qc/{sample}/hmm/{sample}.hmm.tigr.out"
+    log:
+        LOG_FP / "hmmsearch_tigr_{sample}.log"
+    conda:
+        "envs/sbx_binning_env.yml"
+    threads: 8
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output.tbl})
+        hmmsearch -o {output.out} --tblout {output.tbl} \
+          --noali --notextw --cut_nc --cpu {threads} \
+          "${MAGScoT_folder}/hmm/gtdbtk_rel207_tigrfam.hmm" \
+          {input.faa} &> {log}
+        """
+
+rule hmmsearch_pfam:
+    input:
+        faa="qc/{sample}/prodigal/{sample}.faa"
+   output:
+        tbl = "qc/{sample}/hmm/{sample}.hmm.pfam.hit.out",
+        out = "qc/{sample}/hmm/{sample}.hmm.pfam.out"
+    log:
+        LOG_FP / "hmmsearch_pfam_{sample}.log"
+    conda:
+        "envs/sbx_binning_env.yml"
+    threads: 8
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output.tbl})
+        hmmsearch -o {output.out} --tblout {output.tbl} \
+          --noali --notextw --cut_nc --cpu {threads} \
+          "${MAGScoT_folder}/hmm/gtdbtk_rel207_Pfam-A.hmm" \
+          {input.faa} &> {log}
+        """
+
+rule combine_hmm_hits:
+    input:
+        tigr="qc/{sample}/hmm/{sample}.hmm.tigr.hit.out",
+        pfam="qc/{sample}/hmm/{sample}.hmm.pfam.hit.out"
+    output:
+        hmm="qc/{sample}/hmm/{sample}.hmm"
+    shell:
+        """
+        cat {input.tigr} | grep -v "^#" | awk '{{print $1"\t"$3"\t"$5}}' > {wildcards.sample}.tigr
+        cat {input.pfam} | grep -v "^#" | awk '{{print $1"\t"$4"\t"$5}}' > {wildcards.sample}.pfam
+        cat {wildcards.sample}.pfam {wildcards.sample}.tigr > {output.hmm}
+        rm {wildcards.sample}.pfam {wildcards.sample}.tigr
+        """
+
+rule run_magscot:
+    input:
+        contig_map="bins/{sample}/contigs_to_bin.tsv",
+        hmm="qc/{sample}/hmm/{sample}.hmm"
+    output:
+        out_base="qc/{sample}/refined/{sample}.magscot"
+    ...
+
+
 
 # ----------------------------
 # Refinement (MAGScoT)
 # ----------------------------
+
+MAGScoT_fp = Cfg["magscot"]["MAGScoT_fp"]
+
 rule run_magscot:
     input:
         contig_map = "bins/{sample}/contigs_to_bin.tsv",
-        hmm = Cfg["magscot"]["hmm"]  # or define path to your HMM marker file
+        hmm = "{MAGScoT_folder}/"
     output:
         out_base = "qc/{sample}/refined/{sample}.magscot"  
     log:

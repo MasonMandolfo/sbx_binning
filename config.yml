@@ -3,3 +3,5 @@ sbx_binning:
   vamb_minfasta: 200000
   threads: 8
   group_csv: "groups.csv"
+magscot:
+  MAGScoT_fp: /path/to/magscot/
