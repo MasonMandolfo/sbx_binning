@@ -202,48 +202,69 @@ rule scaffolds2bin:
                 touch {output.tsv}
             fi
         elif [ "{wildcards.tool}" = "vamb" ]; then
-            python scripts/vamb_clusters_to_bins.py {input}/vae_clusters_unsplit.tsv {output.tsv} > {log} 2>&1
+            awk 'NR>1 {{print $1 "\t" $2 "\tvamb"}}' {input} > {output.tsv} 2> {log}
         else
             echo "Unknown binning tool: {wildcards.tool}" >&2
             exit 1
         fi
         """
 
+rule concat_bin_mappings:
+    input:
+        met = "bins/{sample}/metabat2_scaffolds2bin.tsv",
+        vam = "bins/{sample}/vamb_scaffolds2bin.tsv"
+    output:
+        concat = "bins/{sample}/contigs_to_bin.tsv"
+    log:
+        LOG_FP / "concat_bin_mappings_{sample}.log"
+    shell:
+        r"""
+        set -euo pipefail
+        # Both metabat2_scaffolds2bin.tsv and vamb_scaffolds2bin.tsv should each have exactly 3 columns (BIN, CONTIG, BINNER)
+        cat {input.met} {input.vam} > {output.concat} 2> {log}
+        """
 
 
 # ----------------------------
 # Refinement (MAGScoT)
 # ----------------------------
-rule refine_bins:
+rule run_magscot:
     input:
-        metabat2_bins="bins/{sample}/metabat2",
-        metabat2_map="bins/{sample}/metabat2_scaffolds2bin.tsv",
-        vamb_map="bins/{sample}/vamb_scaffolds2bin.tsv"
+        contig_map = "bins/{sample}/contigs_to_bin.tsv",
+        hmm = Cfg["magscot"]["hmm"]  # or define path to your HMM marker file
     output:
-        bins="bins/{sample}/refined/{sample}.refined_bins.fa",
-        summary="bins/{sample}/refined/{sample}.refined_summary.tsv"
-    benchmark:
-        BENCHMARK_FP / "refine_bins_{sample}.tsv"
+        out_base = "qc/{sample}/refined/{sample}.magscot"  
     log:
-        LOG_FP / "refine_bins_{sample}.log",
+        LOG_FP / "magscot_{sample}.log"
+    params:
+        profile = Cfg.get("magscot", {}).get("profile", "bac120+ar53"),
+        score_a = Cfg.get("magscot", {}).get("score_a", None),
+        score_b = Cfg.get("magscot", {}).get("score_b", None),
+        score_c = Cfg.get("magscot", {}).get("score_c", None),
+        max_cont = Cfg.get("magscot", {}).get("max_cont", None),
+        threshold = Cfg.get("magscot", {}).get("threshold", None),
+        skip_merge = Cfg.get("magscot", {}).get("skip_merge_bins", False)
     conda:
-        "envs/sbx_binning_env.yml"
-    container:
-        f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
-    threads: 8
+        "envs/sbx_binning_env.yml
+    threads: Cfg["magscot"].get("threads", 4)
     shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output.out_base})
+        Rscript path/to/MAGScoT.R \
+            -i {input.contig_map} \
+            --hmm {input.hmm} \
+            -p {params.profile} \
+            -o {output.out_base} \
+            {("--a " + str(params.score_a)) if params.score_a else ""} \
+            {("--b " + str(params.score_b)) if params.score_b else ""} \
+            {("--c " + str(params.score_c)) if params.score_c else ""} \
+            {("--max_cont " + str(params.max_cont)) if params.max_cont else ""} \
+            {("-t " + str(params.threshold)) if params.threshold else ""} \
+            {("--skip_merge_bins" if params.skip_merge else ""} \
+         > {log} 2>&1
         """
-        if [ -s {input.metabat2_map} ] || [ -s {input.vamb_map} ]; then
-            mkdir -p $(dirname {output.bins})
-            {workflow.basedir}/scripts/run_magscot.sh \
-            --metabat {input.metabat2_map} \
-            --vamb {input.vamb_map} \
-            --outdir $(dirname {output.bins}) \
-            --prefix {wildcards.sample} &> {log}
-        else
-            touch {output.bins} {output.summary}
-        fi
-        """
+
 
 
 # ----------------------------
@@ -251,7 +272,7 @@ rule refine_bins:
 # ----------------------------
 rule qc_bins:
     input:
-        bins="bins/{sample}/refined/{sample}.refined_bins.fa"
+        bins="bins/{sample}/refined/{sample}.magscot"
     output:
         tsv="qc/mags/{sample}.checkm2.tsv"
     benchmark:
