@@ -194,7 +194,7 @@ rule scaffolds2bin:
             if ls ${{bins_dir}}/*.fa 1> /dev/null 2>&1; then
                 for f in ${{bins_dir}}/*.fa; do
                     bin=$(basename $f .fa)
-                    awk -v b=$bin '/^>/ {gsub(/^>/, "", $1); print $1 "\t" b "\tmetabat2"}' $f
+                    awk -v b=$bin '/^>/ {{gsub(/^>/, "", $1); print $1 "\t" b "\tmetabat2"}}' $f
                 done > {output.tsv} 2> {log}
             else
                 # No bins produced, create empty file
