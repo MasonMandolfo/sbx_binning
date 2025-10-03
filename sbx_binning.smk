@@ -320,7 +320,7 @@ rule run_magscot:
         contig_map = "bins/{sample}/contigs_to_bin.tsv",
         hmm = "qc/{sample}/hmm/{sample}.hmm"
     output:
-        outdir = directroy("qc/{sample}/refined/{sample}.magscot")
+        outdir = directory("qc/{sample}/refined/{sample}.magscot")
     log:
         LOG_FP / "magscot_{sample}.log"
     params:
