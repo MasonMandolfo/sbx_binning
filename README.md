@@ -1,6 +1,3 @@
-This is a template to use to extend the [Sunbeam pipeline](https://github.com/sunbeam-labs/sunbeam). Check out the [Sunbeam extensions dev docs](https://sunbeam.readthedocs.io/en/stable/dev_extensions.html) for more info.
-
-(You can delete everything above this line)
 -----------------------------------------------------------------
 
 <img src="https://github.com/sunbeam-labs/sunbeam/blob/main/docs/images/sunbeam_logo.gif" width=120, height=120 align="left" />
@@ -15,11 +12,11 @@ This is a template to use to extend the [Sunbeam pipeline](https://github.com/su
 
 ## Introduction
 
-sbx_binning is a [sunbeam](https://github.com/sunbeam-labs/sunbeam) extension for .... This pipeline uses ....
+sbx_binning is a [sunbeam](https://github.com/sunbeam-labs/sunbeam) extension for binning assembled contigs from sbx_assembly into Metagenome-assembled genomes (MAGS) This pipeline uses binners metabat2 and VAMB and refines these bins using MAGScoT and CheckM2 for quality control.
 
 ## Config
 
-  - example_rule_options: Example rule options
+  - all_binning: runs the full binning pipeline
     
 ## Docs
 
