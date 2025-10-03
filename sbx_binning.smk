@@ -324,7 +324,10 @@ rule run_magscot:
     log:
         LOG_FP / "magscot_{sample}.log"
     params:
-        profile = Cfg.get("magscot", {}).get("profile", "bac120+ar53"),
+        profile = lambda wc: (
+            f"-p {Cfg['magscot']['profile']}"
+            if Cfg.get("magscot", {}).get("profile") in ["bac120", "ar53"]
+            else ""),
         score_a = lambda wc: f"--a {Cfg['magscot']['score_a']}" if Cfg['magscot'].get('score_a') else "",
         score_b = lambda wc: f"--b {Cfg['magscot']['score_b']}" if Cfg['magscot'].get('score_b') else "",
         score_c = lambda wc: f"--c {Cfg['magscot']['score_c']}" if Cfg['magscot'].get('score_c') else "",
