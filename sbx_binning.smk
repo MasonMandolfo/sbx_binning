@@ -280,7 +280,7 @@ rule hmmsearch_tigr:
 rule hmmsearch_pfam:
     input:
         faa="qc/{sample}/prodigal/{sample}.faa"
-   output:
+    output:
         tbl = "qc/{sample}/hmm/{sample}.hmm.pfam.hit.out",
         out = "qc/{sample}/hmm/{sample}.hmm.pfam.out"
     log:
