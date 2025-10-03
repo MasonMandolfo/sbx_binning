@@ -11,7 +11,6 @@ except NameError:
 # ----------------------------
 rule all_binning:
     input:
-        expand("bins/{sample}/refined/{sample}.refined_bins.fa", sample=Samples),
         expand("qc/mags/{sample}.checkm2.tsv", sample=Samples),
 
 
