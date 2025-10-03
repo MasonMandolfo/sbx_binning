@@ -254,6 +254,8 @@ rule prodigal_orf:
         rm -rf "$tmpdir"
         """
 
+MAGScoT_fp = Cfg["magscot"]["MAGScoT_fp"]
+
 rule hmmsearch_tigr:
     input:
         faa="qc/{sample}/prodigal/{sample}.faa"
@@ -271,7 +273,7 @@ rule hmmsearch_tigr:
         mkdir -p $(dirname {output.tbl})
         hmmsearch -o {output.out} --tblout {output.tbl} \
           --noali --notextw --cut_nc --cpu {threads} \
-          "${MAGScoT_folder}/hmm/gtdbtk_rel207_tigrfam.hmm" \
+          "${MAGScoT_fp}/hmm/gtdbtk_rel207_tigrfam.hmm" \
           {input.faa} &> {log}
         """
 
@@ -292,7 +294,7 @@ rule hmmsearch_pfam:
         mkdir -p $(dirname {output.tbl})
         hmmsearch -o {output.out} --tblout {output.tbl} \
           --noali --notextw --cut_nc --cpu {threads} \
-          "${MAGScoT_folder}/hmm/gtdbtk_rel207_Pfam-A.hmm" \
+          "${MAGScoT_fp}/hmm/gtdbtk_rel207_Pfam-A.hmm" \
           {input.faa} &> {log}
         """
 
@@ -304,32 +306,22 @@ rule combine_hmm_hits:
         hmm="qc/{sample}/hmm/{sample}.hmm"
     shell:
         """
-        cat {input.tigr} | grep -v "^#" | awk '{{print $1"\t"$3"\t"$5}}' > {wildcards.sample}.tigr
-        cat {input.pfam} | grep -v "^#" | awk '{{print $1"\t"$4"\t"$5}}' > {wildcards.sample}.pfam
+        cat {input.tigr} | grep -v "^#" | awk '{print $1"\t"$3"\t"$5}' > {wildcards.sample}.tigr
+        cat {input.pfam} | grep -v "^#" | awk '{print $1"\t"$4"\t"$5}' > {wildcards.sample}.pfam
         cat {wildcards.sample}.pfam {wildcards.sample}.tigr > {output.hmm}
         rm {wildcards.sample}.pfam {wildcards.sample}.tigr
         """
-
-rule run_magscot:
-    input:
-        contig_map="bins/{sample}/contigs_to_bin.tsv",
-        hmm="qc/{sample}/hmm/{sample}.hmm"
-    output:
-        out_base="qc/{sample}/refined/{sample}.magscot"
-    ...
-
 
 
 # ----------------------------
 # Refinement (MAGScoT)
 # ----------------------------
 
-MAGScoT_fp = Cfg["magscot"]["MAGScoT_fp"]
 
 rule run_magscot:
     input:
         contig_map = "bins/{sample}/contigs_to_bin.tsv",
-        hmm = "{MAGScoT_folder}/"
+        hmm = "{MAGScoT_fp}/hmm/"
     output:
         out_base = "qc/{sample}/refined/{sample}.magscot"  
     log:
@@ -349,7 +341,7 @@ rule run_magscot:
         r"""
         set -euo pipefail
         mkdir -p $(dirname {output.out_base})
-        Rscript path/to/MAGScoT.R \
+        Rscript {MAGScoT_fp}/MAGScoT.R \
             -i {input.contig_map} \
             --hmm {input.hmm} \
             -p {params.profile} \
