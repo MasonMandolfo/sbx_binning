@@ -272,7 +272,7 @@ rule hmmsearch_tigr:
         mkdir -p $(dirname {output.tbl})
         hmmsearch -o {output.out} --tblout {output.tbl} \
           --noali --notextw --cut_nc --cpu {threads} \
-          "${MAGScoT_fp}/hmm/gtdbtk_rel207_tigrfam.hmm" \
+          "{MAGScoT_fp}/hmm/gtdbtk_rel207_tigrfam.hmm" \
           {input.faa} &> {log}
         """
 
@@ -293,7 +293,7 @@ rule hmmsearch_pfam:
         mkdir -p $(dirname {output.tbl})
         hmmsearch -o {output.out} --tblout {output.tbl} \
           --noali --notextw --cut_nc --cpu {threads} \
-          "${MAGScoT_fp}/hmm/gtdbtk_rel207_Pfam-A.hmm" \
+          "{MAGScoT_fp}/hmm/gtdbtk_rel207_Pfam-A.hmm" \
           {input.faa} &> {log}
         """
 
