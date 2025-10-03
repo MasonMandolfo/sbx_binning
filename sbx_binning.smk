@@ -245,7 +245,7 @@ rule run_magscot:
         threshold = Cfg.get("magscot", {}).get("threshold", None),
         skip_merge = Cfg.get("magscot", {}).get("skip_merge_bins", False)
     conda:
-        "envs/sbx_binning_env.yml
+        "envs/sbx_binning_env.yml"
     threads: Cfg["magscot"].get("threads", 4)
     shell:
         r"""
