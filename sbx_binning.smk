@@ -320,17 +320,18 @@ rule run_magscot:
         contig_map = "bins/{sample}/contigs_to_bin.tsv",
         hmm = "qc/{sample}/hmm/{sample}.hmm"
     output:
-        out_base = "qc/{sample}/refined/{sample}.magscot"  
+        out_base = "qc/{sample}/refined/{sample}.magscot"
     log:
         LOG_FP / "magscot_{sample}.log"
     params:
         profile = Cfg.get("magscot", {}).get("profile", "bac120+ar53"),
-        score_a = Cfg.get("magscot", {}).get("score_a", None),
-        score_b = Cfg.get("magscot", {}).get("score_b", None),
-        score_c = Cfg.get("magscot", {}).get("score_c", None),
-        max_cont = Cfg.get("magscot", {}).get("max_cont", None),
-        threshold = Cfg.get("magscot", {}).get("threshold", None),
-        skip_merge = Cfg.get("magscot", {}).get("skip_merge_bins", False)
+        score_a = lambda wc: f"--a {Cfg['magscot']['score_a']}" if Cfg['magscot'].get('score_a') else "",
+        score_b = lambda wc: f"--b {Cfg['magscot']['score_b']}" if Cfg['magscot'].get('score_b') else "",
+        score_c = lambda wc: f"--c {Cfg['magscot']['score_c']}" if Cfg['magscot'].get('score_c') else "",
+        max_cont = lambda wc: f"--max_cont {Cfg['magscot']['max_cont']}" if Cfg['magscot'].get('max_cont') else "",
+        threshold = lambda wc: f"-t {Cfg['magscot']['threshold']}" if Cfg['magscot'].get('threshold') else "",
+        skip_merge = lambda wc: "--skip_merge_bins" if Cfg['magscot'].get('skip_merge_bins', False) else "",
+        magscot_fp = MAGScoT_fp
     conda:
         "envs/sbx_binning_env.yml"
     threads: Cfg["magscot"].get("threads", 4)
@@ -338,18 +339,18 @@ rule run_magscot:
         r"""
         set -euo pipefail
         mkdir -p $(dirname {output.out_base})
-        Rscript {MAGScoT_fp}/MAGScoT.R \
+        Rscript {params.magscot_fp}/MAGScoT.R \
             -i {input.contig_map} \
             --hmm {input.hmm} \
             -p {params.profile} \
             -o {output.out_base} \
-            {("--a " + str(params.score_a)) if params.score_a else ""} \
-            {("--b " + str(params.score_b)) if params.score_b else ""} \
-            {("--c " + str(params.score_c)) if params.score_c else ""} \
-            {("--max_cont " + str(params.max_cont)) if params.max_cont else ""} \
-            {("-t " + str(params.threshold)) if params.threshold else ""} \
-            {("--skip_merge_bins") if params.skip_merge else ""} \
-         > {log} 2>&1
+            {params.score_a} \
+            {params.score_b} \
+            {params.score_c} \
+            {params.max_cont} \
+            {params.threshold} \
+            {params.skip_merge} \
+            > {log} 2>&1
         """
 
 
