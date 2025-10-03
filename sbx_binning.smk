@@ -194,14 +194,13 @@ rule scaffolds2bin:
             if ls ${{bins_dir}}/*.fa 1> /dev/null 2>&1; then
                 for f in ${{bins_dir}}/*.fa; do
                     bin=$(basename $f .fa)
-                    awk -v b=$bin '/^>/ {{gsub(/^>/, "", $1); print $1 "\t" b "\tmetabat2"}}' $f
+                    awk -v b=$bin '/^>/ {{gsub(/^>/, "", $1); print b "\t" $1 "\tmetabat2"}}' $f
                 done > {output.tsv} 2> {log}
             else
-                # No bins produced, create empty file
                 touch {output.tsv}
             fi
         elif [ "{wildcards.tool}" = "vamb" ]; then
-            awk 'NR>1 {{print $1 "\t" $2 "\tvamb"}}' {input} > {output.tsv} 2> {log}
+            awk 'NR>1 {{print $2 "\t" $1 "\tvamb"}}' {input} > {output.tsv} 2> {log}
         else
             echo "Unknown binning tool: {wildcards.tool}" >&2
             exit 1
@@ -219,7 +218,7 @@ rule concat_bin_mappings:
     shell:
         r"""
         set -euo pipefail
-        # Both metabat2_scaffolds2bin.tsv and vamb_scaffolds2bin.tsv should each have exactly 3 columns (BIN, CONTIG, BINNER)
+        # Ensure proper 3-column format: BinID ContigID Tool
         cat {input.met} {input.vam} > {output.concat} 2> {log}
         """
 
