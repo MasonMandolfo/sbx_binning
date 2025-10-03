@@ -321,7 +321,7 @@ rule combine_hmm_hits:
 rule run_magscot:
     input:
         contig_map = "bins/{sample}/contigs_to_bin.tsv",
-        hmm = "{MAGScoT_fp}/hmm/"
+        hmm = "qc/{sample}/hmm/{sample}.hmm"
     output:
         out_base = "qc/{sample}/refined/{sample}.magscot"  
     log:
