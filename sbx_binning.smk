@@ -320,7 +320,7 @@ rule run_magscot:
         contig_map = "bins/{sample}/contigs_to_bin.tsv",
         hmm = "qc/{sample}/hmm/{sample}.hmm"
     output:
-        out_base = "qc/{sample}/refined/{sample}.magscot"
+        outdir = directroy("qc/{sample}/refined/{sample}.magscot")
     log:
         LOG_FP / "magscot_{sample}.log"
     params:
@@ -338,12 +338,11 @@ rule run_magscot:
     shell:
         r"""
         set -euo pipefail
-        mkdir -p $(dirname {output.out_base})
         Rscript {params.magscot_fp}/MAGScoT.R \
             -i {input.contig_map} \
             --hmm {input.hmm} \
             -p {params.profile} \
-            -o {output.out_base} \
+            -o {output.outdir} \
             {params.score_a} \
             {params.score_b} \
             {params.score_c} \
