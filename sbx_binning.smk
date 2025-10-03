@@ -170,7 +170,7 @@ rule binning_vamb:
                  --abundance_tsv {input.depth} \
                  --minfasta 200000 &> {log}
         else
-            touch {output}/vamb.dummy
+            touch {output.vambdir}/vamb.dummy
         fi
         """
 
@@ -261,7 +261,7 @@ rule run_magscot:
             {("--c " + str(params.score_c)) if params.score_c else ""} \
             {("--max_cont " + str(params.max_cont)) if params.max_cont else ""} \
             {("-t " + str(params.threshold)) if params.threshold else ""} \
-            {("--skip_merge_bins" if params.skip_merge else ""} \
+            {("--skip_merge_bins") if params.skip_merge else ""} \
          > {log} 2>&1
         """
 
