@@ -321,6 +321,7 @@ rule run_magscot:
         hmm = "qc/{sample}/hmm/{sample}.hmm"
     output:
         outdir = directory("qc/{sample}/refined/{sample}.magscot")
+        sentinel="qc/{sample}/refined/{sample}.magscot/done"
     log:
         LOG_FP / "magscot_{sample}.log"
     params:
@@ -350,6 +351,7 @@ rule run_magscot:
             {params.threshold} \
             {params.skip_merge} \
             > {log} 2>&1
+        touch {output.sentinel}
         """
 
 
@@ -359,24 +361,21 @@ rule run_magscot:
 # ----------------------------
 rule qc_bins:
     input:
-        bins=directory("qc/{sample}/refined/{sample}.magscot/refined_bins")
+        sentinel="qc/{sample}/refined/{sample}.magscot/done"
     output:
         tsv="qc/mags/{sample}.checkm2.tsv"
-    benchmark:
-        BENCHMARK_FP / "qc_bins_{sample}.tsv"
     log:
-        LOG_FP / "qc_bins_{sample}.log",
+        LOG_FP / "qc_bins_{sample}.log"
     conda:
         "envs/sbx_checkm2_env.yml"
-    container:
-        f"docker://sunbeamlabs/sbx_assembly:{SBX_ASSEMBLY_VERSION}-binning"
     threads: 8
     shell:
-        """
-        if [ -s {input.bins} ]; then
+        r"""
+        magscot_dir=$(dirname {input.sentinel})
+        if compgen -G "$magscot_dir/refined_bins/*.fa" > /dev/null; then
             mkdir -p qc/mags
             checkm2 predict \
-              --input {input.bins} \
+              --input $magscot_dir/refined_bins \
               --output qc/mags/{wildcards.sample}.checkm2 \
               --threads {threads} &> {log}
             cp qc/mags/{wildcards.sample}.checkm2/quality_report.tsv {output.tsv}
