@@ -362,7 +362,7 @@ rule run_magscot:
 # ----------------------------
 rule qc_bins:
     input:
-        bins="bins/{sample}/refined/{sample}.magscot"
+        bins="qc/{sample}/refined/{sample}.magscot"
     output:
         tsv="qc/mags/{sample}.checkm2.tsv"
     benchmark:
