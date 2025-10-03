@@ -200,7 +200,7 @@ rule scaffolds2bin:
                 touch {output.tsv}
             fi
         elif [ "{wildcards.tool}" = "vamb" ]; then
-            awk 'NR>1 {{print $2 "\t" $1 "\tvamb"}}' {input} > {output.tsv} 2> {log}
+            awk 'NR>1 {{print $1 "\t" $2 "\tvamb"}}' {input}/vae_clusters_unsplit.tsv > {output.tsv} 2> {log}
         else
             echo "Unknown binning tool: {wildcards.tool}" >&2
             exit 1
