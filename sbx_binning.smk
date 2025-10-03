@@ -304,9 +304,9 @@ rule combine_hmm_hits:
     output:
         hmm="qc/{sample}/hmm/{sample}.hmm"
     shell:
-         r"""
+        r"""
         (grep -v "^#" {input.tigr} | awk '{{print $1"\t"$3"\t"$5}}'
-         grep -v "^#" {input.pfam} | awk '{{print $1"\t"$4"\t"$5}}') > {output.hmm}
+        grep -v "^#" {input.pfam} | awk '{{print $1"\t"$4"\t"$5}}') > {output.hmm}
         """
 
 
