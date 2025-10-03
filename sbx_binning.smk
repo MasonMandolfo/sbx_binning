@@ -304,11 +304,9 @@ rule combine_hmm_hits:
     output:
         hmm="qc/{sample}/hmm/{sample}.hmm"
     shell:
-        """
-        cat {input.tigr} | grep -v "^#" | awk '{print $1"\t"$3"\t"$5}' > {wildcards.sample}.tigr
-        cat {input.pfam} | grep -v "^#" | awk '{print $1"\t"$4"\t"$5}' > {wildcards.sample}.pfam
-        cat {wildcards.sample}.pfam {wildcards.sample}.tigr > {output.hmm}
-        rm {wildcards.sample}.pfam {wildcards.sample}.tigr
+         r"""
+        (grep -v "^#" {input.tigr} | awk '{{print $1"\t"$3"\t"$5}}'
+         grep -v "^#" {input.pfam} | awk '{{print $1"\t"$4"\t"$5}}') > {output.hmm}
         """
 
 
