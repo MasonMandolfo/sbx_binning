@@ -12,7 +12,7 @@
 
 ## Introduction
 
-sbx_binning is a [sunbeam](https://github.com/sunbeam-labs/sunbeam) extension for binning assembled contigs from sbx_assembly into Metagenome-assembled genomes (MAGS) This pipeline uses binners metabat2 and VAMB and refines these bins using MAGScoT and CheckM2 for quality control.
+sbx_binning is a [sunbeam](https://github.com/sunbeam-labs/sunbeam) extension for binning assembled contigs from sbx_assembly into Metagenome-assembled genomes (MAGS) This pipeline uses binners metabat2 and VAMB and refines these bins using MAGScoT and CheckM2 for quality control. Before using the tool, you must install MAGScoT from github and configure the path/to/MAGScoT.
 
 ## Config
 
